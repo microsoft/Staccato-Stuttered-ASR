@@ -1,0 +1,4 @@
+# ruff.toml
+
+# Ignore all Jupyter notebook files.
+extend-exclude = ["*.ipynb"]

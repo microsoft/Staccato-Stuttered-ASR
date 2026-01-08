@@ -1,33 +1,128 @@
-# Project
+# Staccato: Stuttered Speech Recognition
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+Staccato is a speech recognition pipeline optimized for transcribing stuttered speech. It combines OpenAI's Whisper model with GPT-4o to produce accurate transcriptions that capture the speaker's intended message, filtering out involuntary disfluencies.
 
-As the maintainer of this project, please make a few updates:
+## Overview
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+People who stutter speak with involuntary sound repetitions, word repetitions, prolongations, and blocks. Standard ASR models like Whisper are not trained on stuttered speech data and often produce poor transcriptions. Staccato addresses this by:
+
+1. **Whisper transcription**: Initial transcription using Whisper Large V3
+2. **GPT-4o refinement**: Uses GPT-4o with audio understanding to refine the transcription, leveraging both the audio and initial transcription
+
+## Installation
+
+### Prerequisites
+
+- Python 3.12+
+- NVIDIA GPU with CUDA support (CUDA 11.8+)
+- CUDA toolkit installed (`nvcc` must be in PATH)
+- Linux (tested on Ubuntu)
+- Git
+
+### Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/staccato.git
+   cd staccato
+   ```
+
+2. Install uv:
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+
+3. **Restart your terminal** to ensure `uv` is in your PATH.
+
+4. Install dependencies:
+   ```bash
+   uv sync
+   ```
+
+5. Fix flash-attn (required for Flash Attention 2 support):
+   ```bash
+   export PATH=/usr/local/cuda/bin:$PATH
+   export CUDA_HOME=/usr/local/cuda
+   rm -rf .venv/lib/python3.12/site-packages/flash_attn*
+   uv cache clean flash-attn
+   uv pip install flash-attn --no-build-isolation --no-binary flash-attn
+   ```
+   
+   > **Note:** This compilation takes 5-10 minutes and requires the CUDA toolkit. If `nvcc --version` doesn't work, install CUDA toolkit first.
+
+6. Download Whisper model:
+   ```bash
+   mkdir -p ./data/models
+   uv run huggingface-cli download --local-dir ./data/models/whisper-large-v3 openai/whisper-large-v3
+   ```
+
+7. Create a `.env` file with your OpenAI API key:
+   ```bash
+   echo "OPENAI_API_KEY=your-api-key-here" > .env
+   ```
+
+## Usage
+
+### Command Line
+
+Transcribe audio files from the terminal:
+
+```bash
+# With your own audio file
+uv run python src/approaches/dspy_whisper_gpt_4o/pipeline.py \
+  --audio-files /path/to/your/audio.wav
+
+# If you downloaded sample data (multiple files)
+uv run python src/approaches/dspy_whisper_gpt_4o/pipeline.py \
+  --audio-files data/processed/fluencybank/wav_clips/27fb_086_000.wav \
+               data/processed/fluencybank/wav_clips/44m_381_000.wav
+
+# With custom model directory
+uv run python src/approaches/dspy_whisper_gpt_4o/pipeline.py \
+  --model-dir ./data/models/whisper-large-v3 \
+  --audio-files /path/to/your/audio.wav
+```
+
+### Python API
+
+```python
+from pathlib import Path
+import sys
+
+# Add src to path
+sys.path.insert(0, 'src')
+
+import librosa
+from approaches.dspy_whisper_gpt_4o.pipeline import DspyPipeline
+
+# Initialize pipeline
+pipe = DspyPipeline(
+    model_dir=Path("./data/models/whisper-large-v3"),
+)
+pipe.load_model()
+
+# Load audio
+audio, sr = librosa.load("path/to/audio.wav")
+
+# Transcribe
+result = pipe.transcribe([audio], sr)
+print(result)
+```
+
+## Project Structure
+
+```
+src/
+├── approaches/
+│   ├── dspy_whisper_gpt_4o/
+│   │   └── pipeline.py          # Main pipeline (Whisper + GPT-4o)
+│   └── vanilla_whisper/
+│       └── whisper.py           # WhisperTranscriber wrapper
+└── evaluation/
+    └── inference_models/
+        └── asr_model_base.py    # Base class for ASR models
+```
 
 ## Contributing
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit [Contributor License Agreements](https://cla.opensource.microsoft.com).
-
-When you submit a pull request, a CLA bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
-
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
-
-## Trademarks
-
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft
-trademarks or logos is subject to and must follow
-[Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
-Any use of third-party trademarks or logos are subject to those third-party's policies.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.

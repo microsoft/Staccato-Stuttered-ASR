@@ -1,0 +1,36 @@
+name: Offline transcript evaluation
+
+on:
+  push:
+    paths:
+      - "src/evaluation/compare_transcripts.py"
+      - "tests/test_compare_transcripts.py"
+      - "examples/synthetic_transcripts.jsonl"
+      - ".github/workflows/offline-evaluation.yml"
+  pull_request:
+    paths:
+      - "src/evaluation/compare_transcripts.py"
+      - "tests/test_compare_transcripts.py"
+      - "examples/synthetic_transcripts.jsonl"
+      - ".github/workflows/offline-evaluation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install jiwer==4.0.0 ruff==0.17.3 pyright==1.1.414
+      - run: python -m ruff check src/evaluation/compare_transcripts.py tests/test_compare_transcripts.py
+      - run: python -m ruff format --check src/evaluation/compare_transcripts.py tests/test_compare_transcripts.py
+      - run: python -m pyright src/evaluation/compare_transcripts.py tests/test_compare_transcripts.py
+      - run: python -m unittest discover -s tests -v
+      - run: python src/evaluation/compare_transcripts.py examples/synthetic_transcripts.jsonl --reference-kind intended --output synthetic-report.json

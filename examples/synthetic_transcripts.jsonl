@@ -1,0 +1,3 @@
+{"id":"synthetic-repetition","reference":"I would like tea","baseline":"I I would like tea","refined":"I would like tea","baseline_latency_ms":100,"refined_latency_ms":250,"baseline_cost_usd":0,"refined_cost_usd":0.001}
+{"id":"synthetic-regression","reference":"please keep both words","baseline":"please keep both words","refined":"please keep words","baseline_latency_ms":100,"refined_latency_ms":250,"baseline_cost_usd":0,"refined_cost_usd":0.001}
+{"id":"synthetic-silence","reference":"","baseline":"","refined":"thank you"}

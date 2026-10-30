@@ -109,6 +109,19 @@ result = pipe.transcribe([audio], sr)
 print(result)
 ```
 
+### Offline evaluation (no GPU or API key)
+
+Compare saved baseline and refined transcripts using corpus word error rate,
+per-example regressions, and optional paired latency/cost measurements:
+
+```bash
+uv run --script src/evaluation/compare_transcripts.py examples/synthetic_transcripts.jsonl --reference-kind intended
+```
+
+The bundled examples and measurements are **synthetic**, not model results.
+See [Offline evaluation](docs/offline-evaluation.md) for the input contract,
+reference-task distinctions, limitations, and lightweight test instructions.
+
 ## Project Structure
 
 ```
